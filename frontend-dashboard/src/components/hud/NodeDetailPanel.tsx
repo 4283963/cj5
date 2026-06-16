@@ -124,6 +124,18 @@ export function NodeDetailPanel() {
             </div>
           </div>
 
+          <button
+            onClick={() => {
+              const event = new CustomEvent('ai-diagnose-request', { detail: selectedNode });
+              window.dispatchEvent(event);
+            }}
+            className="w-full py-3 px-4 bg-gradient-to-r from-cyan-500/20 via-blue-500/20 to-purple-500/20 hover:from-cyan-500/30 hover:via-blue-500/30 hover:to-purple-500/30 text-white rounded-lg text-sm border border-cyan-500/40 transition-all flex items-center justify-center gap-2 group"
+          >
+            <span className="text-lg group-hover:animate-pulse">🤖</span>
+            <span className="font-bold">AI 智能诊断</span>
+            <span className="text-xs text-cyan-400/70">一键生成风险报告</span>
+          </button>
+
           <div className="flex gap-2">
             <button className="flex-1 py-2 px-4 bg-neon-blue/20 hover:bg-neon-blue/30 text-neon-blue rounded text-sm border border-neon-blue/50 transition-all">
               链上浏览

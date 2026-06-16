@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { Scene3D } from '../components/3d/Scene3D';
 import { StatsHUD } from '../components/hud/StatsHUD';
@@ -6,17 +6,53 @@ import { NodeDetailPanel } from '../components/hud/NodeDetailPanel';
 import { LiveTransactionFeed } from '../components/hud/LiveTransactionFeed';
 import { ControlPanel } from '../components/hud/ControlPanel';
 import { ThroughputMiniChart } from '../components/hud/ThroughputMiniChart';
+import { AIDiagnosisPanel } from '../components/hud/AIDiagnosisPanel';
 import { useCryptoStream } from '../hooks/useCryptoStream';
 import { useAppStore } from '../store/appStore';
+import type { ParticleNode } from '../types';
 
 export function DexVisualPage() {
   useCryptoStream();
-  const { showConnections, isConnected } = useAppStore();
+  const { showConnections, isConnected, selectedNode } = useAppStore();
   const [showLoading, setShowLoading] = useState(true);
+  const [diagnosisNode, setDiagnosisNode] = useState<ParticleNode | null>(null);
+  const [showDiagnosis, setShowDiagnosis] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setShowLoading(false), 1500);
     return () => clearTimeout(timer);
+  }, []);
+
+  const handleNodeDoubleClick = useCallback((node: ParticleNode) => {
+    setDiagnosisNode(node);
+    setShowDiagnosis(true);
+  }, []);
+
+  useEffect(() => {
+    if (selectedNode) {
+      setDiagnosisNode(selectedNode);
+      setShowDiagnosis(true);
+    }
+  }, [selectedNode]);
+
+  const handleCloseDiagnosis = useCallback(() => {
+    setShowDiagnosis(false);
+    setTimeout(() => setDiagnosisNode(null), 300);
+  }, []);
+
+  useEffect(() => {
+    const handleAIDiagnoseRequest = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      if (customEvent.detail) {
+        setDiagnosisNode(customEvent.detail);
+        setShowDiagnosis(true);
+      }
+    };
+
+    window.addEventListener('ai-diagnose-request', handleAIDiagnoseRequest);
+    return () => {
+      window.removeEventListener('ai-diagnose-request', handleAIDiagnoseRequest);
+    };
   }, []);
 
   return (
@@ -41,6 +77,12 @@ export function DexVisualPage() {
       <NodeDetailPanel />
       <LiveTransactionFeed />
       <ControlPanel />
+
+      <AIDiagnosisPanel
+        node={diagnosisNode}
+        isOpen={showDiagnosis}
+        onClose={handleCloseDiagnosis}
+      />
 
       <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10 pointer-events-none">
         <div className="glass-panel rounded-lg px-6 py-2 text-center hud-corner">

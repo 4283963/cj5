@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { ClickHouseService } from './clickhouse/clickhouse.service';
 import { CryptoController } from './controllers/crypto.controller';
 import { CryptoStreamGateway } from './gateway/crypto-stream.gateway';
+import { AIDiagnosisService } from './services/ai-diagnosis.service';
 
 @Module({
   imports: [
@@ -12,6 +13,6 @@ import { CryptoStreamGateway } from './gateway/crypto-stream.gateway';
     }),
   ],
   controllers: [CryptoController],
-  providers: [ClickHouseService, CryptoStreamGateway],
+  providers: [ClickHouseService, CryptoStreamGateway, AIDiagnosisService],
 })
 export class AppModule {}

@@ -104,3 +104,42 @@ body {
   background-size: 200% 100%;
   animation: data-flow 2s linear infinite;
 }
+
+@keyframes blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+.animate-blink {
+  animation: blink 1s step-end infinite;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 2px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(0, 204, 255, 0.3);
+  border-radius: 2px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 204, 255, 0.5);
+}
+
+.text-risk-high {
+  color: #ff4466;
+}
+
+.text-risk-medium {
+  color: #ffcc00;
+}
+
+.text-risk-low {
+  color: #00ff88;
+}
