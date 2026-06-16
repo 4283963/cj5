@@ -1,0 +1,106 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: radial-gradient(ellipse at center, #0a0a2a 0%, #050510 100%);
+  color: #e0e0ff;
+}
+
+.glass-panel {
+  background: rgba(10, 15, 40, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 204, 255, 0.2);
+  box-shadow:
+    0 0 20px rgba(0, 204, 255, 0.1),
+    inset 0 0 20px rgba(0, 0, 0, 0.5);
+}
+
+.neon-text {
+  text-shadow:
+    0 0 5px currentColor,
+    0 0 10px currentColor,
+    0 0 20px currentColor;
+}
+
+.neon-border {
+  box-shadow:
+    0 0 5px currentColor,
+    0 0 10px currentColor,
+    inset 0 0 5px rgba(0, 255, 136, 0.1);
+}
+
+.scanline-effect {
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 255, 136, 0.03) 2px,
+    rgba(0, 255, 136, 0.03) 4px
+  );
+  pointer-events: none;
+}
+
+.hud-corner {
+  position: relative;
+}
+
+.hud-corner::before,
+.hud-corner::after {
+  content: '';
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-color: #00ccff;
+  border-style: solid;
+}
+
+.hud-corner::before {
+  top: -1px;
+  left: -1px;
+  border-width: 1px 0 0 1px;
+}
+
+.hud-corner::after {
+  bottom: -1px;
+  right: -1px;
+  border-width: 0 1px 1px 0;
+}
+
+@keyframes marquee {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+.marquee {
+  animation: marquee 20s linear infinite;
+}
+
+@keyframes risk-pulse {
+  0%, 100% { opacity: 0.7; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
+}
+
+.risk-pulse {
+  animation: risk-pulse 2s ease-in-out infinite;
+}
+
+@keyframes data-flow {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+.data-flow {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(0, 255, 136, 0.3) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: data-flow 2s linear infinite;
+}

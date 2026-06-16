@@ -1,0 +1,146 @@
+import { useEffect, useMemo, useRef } from 'react';
+import { useFrame } from '@react-three/fiber';
+import * as THREE from 'three';
+import { useAppStore } from '../store/appStore';
+import type { ParticleNode, RiskAddress } from '../types';
+import {
+  riskScoreToColor,
+  volumeToSize,
+  generateSphericalPosition,
+  generateId,
+  clamp,
+  lerp,
+  lerpColor,
+} from '../utils/visualization';
+
+export function useParticleSystem() {
+  const {
+    riskyNodes,
+    filterRiskLevel,
+    nodeSizeScale,
+    isPaused,
+    setParticleNodes,
+    updateParticleNode,
+    particleNodes,
+  } = useAppStore();
+
+  const lastUpdateRef = useRef<number>(0);
+  const nodeMapRef = useRef<Map<string, ParticleNode>>(new Map());
+
+  const filteredRiskyNodes = useMemo(() => {
+    return riskyNodes.filter((node) => filterRiskLevel.includes(node.risk_level));
+  }, [riskyNodes, filterRiskLevel]);
+
+  useEffect(() => {
+    const currentMap = nodeMapRef.current;
+    const newMap = new Map<string, ParticleNode>();
+    const now = Date.now();
+
+    const highRiskNodes = filteredRiskyNodes.filter((n) => n.risk_level === 'high');
+    const mediumRiskNodes = filteredRiskyNodes.filter((n) => n.risk_level === 'medium');
+    const lowRiskNodes = filteredRiskyNodes.filter((n) => n.risk_level === 'low');
+
+    const allSorted = [...highRiskNodes, ...mediumRiskNodes, ...lowRiskNodes];
+    const total = allSorted.length;
+
+    allSorted.forEach((riskNode: RiskAddress, index: number) => {
+      const existing = currentMap.get(riskNode.address);
+      const targetColor = riskScoreToColor(riskNode.risk_score, riskNode.risk_level);
+      const targetSize = volumeToSize(riskNode.total_volume, nodeSizeScale);
+
+      if (existing) {
+        newMap.set(riskNode.address, {
+          ...existing,
+          riskScore: riskNode.risk_score,
+          riskLevel: riskNode.risk_level,
+          riskTags: riskNode.risk_tags,
+          volume: riskNode.total_volume,
+          txCount: riskNode.total_transactions,
+          targetSize: targetSize,
+          targetColor: targetColor,
+          lastUpdated: now,
+        });
+      } else {
+        const position = generateSphericalPosition(index, total, 18);
+        newMap.set(riskNode.address, {
+          id: generateId(),
+          address: riskNode.address,
+          position: { ...position },
+          basePosition: { ...position },
+          targetSize: targetSize,
+          currentSize: 0.01,
+          riskScore: riskNode.risk_score,
+          riskLevel: riskNode.risk_level,
+          riskTags: riskNode.risk_tags,
+          volume: riskNode.total_volume,
+          txCount: riskNode.total_transactions,
+          color: { r: 0, g: 0, b: 0 },
+          targetColor: targetColor,
+          pulsePhase: Math.random() * Math.PI * 2,
+          rotationSpeed: (Math.random() - 0.5) * 0.02,
+          velocity: {
+            x: (Math.random() - 0.5) * 0.002,
+            y: (Math.random() - 0.5) * 0.002,
+            z: (Math.random() - 0.5) * 0.002,
+          },
+          connections: [],
+          createdAt: now,
+          lastUpdated: now,
+        });
+      }
+    });
+
+    nodeMapRef.current = newMap;
+    setParticleNodes(newMap);
+  }, [filteredRiskyNodes, nodeSizeScale, setParticleNodes]);
+
+  useFrame((_state, delta) => {
+    if (isPaused) return;
+
+    const now = Date.now();
+    if (now - lastUpdateRef.current < 16) return;
+    lastUpdateRef.current = now;
+
+    const currentNodes = nodeMapRef.current;
+    if (currentNodes.size === 0) return;
+
+    currentNodes.forEach((node) => {
+      const { targetSize, targetColor, basePosition, riskScore, riskLevel } = node;
+
+      const sizeLerpFactor = 0.08;
+      node.currentSize = lerp(node.currentSize, targetSize, sizeLerpFactor);
+
+      const colorLerpFactor = 0.12;
+      node.color = lerpColor(node.color, targetColor, colorLerpFactor);
+
+      const time = now * 0.001;
+      const pulseAmount = Math.sin(time * 2 + node.pulsePhase) * 0.08 + 1;
+      const riskIntensity = riskLevel === 'high' ? 0.15 : riskLevel === 'medium' ? 0.08 : 0.03;
+      const jitterAmount = Math.sin(time * 3 + node.pulsePhase * 1.7) * riskIntensity;
+
+      node.currentSize = clamp(
+        node.currentSize * pulseAmount * (1 + jitterAmount),
+        0.2,
+        3.5 * nodeSizeScale,
+      );
+
+      const wobbleX = Math.sin(time * 1.5 + node.pulsePhase) * 0.3;
+      const wobbleY = Math.cos(time * 1.2 + node.pulsePhase * 1.3) * 0.3;
+      const wobbleZ = Math.sin(time * 0.8 + node.pulsePhase * 0.7) * 0.3;
+
+      node.position.x = basePosition.x + wobbleX + node.velocity.x * time * 60;
+      node.position.y = basePosition.y + wobbleY + node.velocity.y * time * 60;
+      node.position.z = basePosition.z + wobbleZ + node.velocity.z * time * 60;
+
+      const colorJitter = riskScore * 0.05;
+      node.color.r = clamp(node.color.r + (Math.random() - 0.5) * colorJitter, 0, 1);
+      node.color.g = clamp(node.color.g + (Math.random() - 0.5) * colorJitter * 0.5, 0, 1);
+      node.color.b = clamp(node.color.b + (Math.random() - 0.5) * colorJitter, 0, 1);
+    });
+  });
+
+  return {
+    particleNodes,
+    filteredRiskyNodes,
+  };
+}
