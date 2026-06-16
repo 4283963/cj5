@@ -43,6 +43,8 @@ interface AppState {
   toggleRiskFilter: (level: 'high' | 'medium' | 'low') => void;
   setNodeSizeScale: (scale: number) => void;
   setLastUpdateTime: (time: number) => void;
+  reconnect: () => void;
+  disconnect: () => void;
 }
 
 const initialStats: AggregatedStats = {
@@ -111,4 +113,12 @@ export const useAppStore = create<AppState>((set) => ({
     }),
   setNodeSizeScale: (scale) => set({ nodeSizeScale: Math.max(0.3, Math.min(3, scale)) }),
   setLastUpdateTime: (time) => set({ lastUpdateTime: time }),
+  reconnect: () => {
+    console.log('🔄 Reconnecting WebSocket from store');
+    window.dispatchEvent(new CustomEvent('crypto-stream-reconnect'));
+  },
+  disconnect: () => {
+    console.log('🔌 Disconnecting WebSocket from store');
+    window.dispatchEvent(new CustomEvent('crypto-stream-disconnect'));
+  },
 }));
